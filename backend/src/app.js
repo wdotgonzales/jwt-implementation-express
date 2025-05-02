@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const port = 3000;
 
-const pool = require("./config/database");
+const pool = require("./config/db.config");
 
 testConnection();
 
