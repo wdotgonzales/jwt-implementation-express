@@ -16,5 +16,20 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
 
+  backend:
+    build: ../backend
+    container_name: jwt-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - MYSQL_HOST=jwt-implementation-express-docker
+      - MYSQL_PORT=3306
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+    depends_on:
+      - db
+
 volumes:
   mysql_data:
