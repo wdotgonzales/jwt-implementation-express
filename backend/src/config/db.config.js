@@ -6,14 +6,19 @@
  * @requires path
  */
 
-const mysql = require("mysql2/promise");
-const dotenv = require("dotenv");
-const path = require("path");
+import mysql from "mysql2/promise";
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from 'url';
+
+// ES Modules alternative for __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  * Loads environment variables from the .env file located in the project root.
  */
-dotenv.config({ path: path.join(__dirname, '../../.env') });
+dotenv.config({ path: path.join(__dirname, "../../.env") });
 
 /**
  * MySQL connection pool configuration.
@@ -42,4 +47,4 @@ const pool = mysql.createPool({
  * MySQL connection pool instance.
  * @type {Pool}
  */
-module.exports = pool;
+export default pool;
