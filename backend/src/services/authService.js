@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import WhitelistService from "./whitelistService.js";
 import DatetimeUtil from "../util/datetime.util.js";
 const saltRounds = 12;
+const JWT_SECRET = process.env.JWT_SECRET;
 
 class AuthService {
   static async validateRegistrationData({ full_name, email, password }) {
@@ -60,19 +61,20 @@ class AuthService {
       throw new Error("INVALID_CREDENTIALS");
     }
 
-    const accessToken = jwt.sign(
-      { id: user.id },
-      '123',
-      { expiresIn: "15m" }
-    );
+    const accessToken = jwt.sign({ id: user.id }, JWT_SECRET, {
+      expiresIn: "15m",
+    });
 
-    const refreshToken = jwt.sign(
-      { id: user.id },
-      '123',
-      { expiresIn: "7d" }
-    );
+    const refreshToken = jwt.sign({ id: user.id }, JWT_SECRET, {
+      expiresIn: "7d",
+    });
 
-    await WhitelistService.insertRefreshToken(user.id, refreshToken, DatetimeUtil.expiryFromDays(7));
+    await WhitelistService.insertRefreshToken({
+      user_id: user.id,
+      refresh_token: refreshToken,
+      expires_at: DatetimeUtil.expiryFromDays(7),
+    });
+
     return { accessToken, refreshToken };
   }
 }

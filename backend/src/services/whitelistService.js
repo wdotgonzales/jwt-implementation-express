@@ -7,9 +7,9 @@ class WhitelistService {
       !user_id ||
       !refresh_token ||
       !expires_at ||
-      user_id.trim() === "" ||
-      refresh_token.trim() === "" ||
-      expires_at.trim() === ""
+      user_id === "" ||
+      refresh_token === "" ||
+      expires_at === ""
     ) {
       throw new Error("ALL_FIELDS_REQUIRED");
     }
