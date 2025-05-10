@@ -1,12 +1,40 @@
+/**
+ * @file Authentication service handling core business logic for user authentication.
+ * @module services/authService
+ * @requires ../models/User
+ * @requires bcryptjs
+ * @requires jsonwebtoken
+ * @requires ./whitelistService
+ * @requires ../util/datetime.util
+ */
+
 import User from "../models/User.js";
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
 import WhitelistService from "./whitelistService.js";
 import DatetimeUtil from "../util/datetime.util.js";
+
 const saltRounds = 12;
 const JWT_SECRET = process.env.JWT_SECRET;
 
+/**
+ * Class containing authentication service methods.
+ * Handles registration, login, logout, and related validation logic.
+ */
 class AuthService {
+  /**
+   * Validates user registration data.
+   * @static
+   * @async
+   * @param {Object} userData - User registration data.
+   * @param {string} userData.full_name - User's full name.
+   * @param {string} userData.email - User's email address.
+   * @param {string} userData.password - User's password.
+   * @throws {Error} Possible validation errors:
+   * - ALL_FIELDS_REQUIRED: If any field is missing or empty
+   * - INVALID_EMAIL_FORMAT: If email format is invalid
+   * - PASSWORD_TOO_SHORT: If password is less than 8 characters
+   */
   static async validateRegistrationData({ full_name, email, password }) {
     if (
       !full_name ||
@@ -28,6 +56,19 @@ class AuthService {
     }
   }
 
+  /**
+   * Registers a new user.
+   * @static
+   * @async
+   * @param {Object} userData - User registration data.
+   * @param {string} userData.full_name - User's full name.
+   * @param {string} userData.email - User's email address.
+   * @param {string} userData.password - User's password.
+   * @returns {Promise<Object>} Created user object (without password).
+   * @throws {Error} Possible errors:
+   * - EMAIL_EXISTS: If email is already registered
+   * - Errors from validateRegistrationData
+   */
   static async registerUser(userData) {
     await this.validateRegistrationData(userData);
 
@@ -44,6 +85,20 @@ class AuthService {
     return user;
   }
 
+  /**
+   * Authenticates a user and generates JWT tokens.
+   * @static
+   * @async
+   * @param {Object} credentials - User login credentials.
+   * @param {string} credentials.email - User's email address.
+   * @param {string} credentials.password - User's password.
+   * @returns {Promise<Object>} Object containing access and refresh tokens.
+   * @property {string} accessToken - JWT access token (expires in 15 minutes).
+   * @property {string} refreshToken - JWT refresh token (expires in 7 days).
+   * @throws {Error} Possible errors:
+   * - ALL_FIELDS_REQUIRED: If email or password is missing
+   * - INVALID_CREDENTIALS: If email/password combination is invalid
+   */
   static async loginUser({ email, password }) {
     if (!email || email == "" || !password || password == "") {
       throw new Error("ALL_FIELDS_REQUIRED");
@@ -76,6 +131,34 @@ class AuthService {
     });
 
     return { accessToken, refreshToken };
+  }
+
+  /**
+   * Handles user logout by validating and preparing for token invalidation.
+   * @static
+   * @async
+   * @param {Object} tokenData - Token data for logout.
+   * @param {string} tokenData.refresh_token - Refresh token to invalidate.
+   * @param {number} tokenData.user_id - ID of the user logging out.
+   * @returns {Promise<Object>} Object containing user ID and refresh token.
+   * @throws {Error} Possible errors:
+   * - LOGOUT_FIELDS_REQUIRED: If required fields are missing
+   * - Error from checkRefreshTokenExistence if token validation fails
+   */
+  static async logoutUser({ refresh_token, user_id }) {
+    if (refresh_token === "" || !refresh_token || user_id === "" || !user_id) {
+      throw new Error("LOGOUT_FIELDS_REQUIRED");
+    }
+
+    await WhitelistService.checkRefreshTokenExistence({
+      user_id: user_id,
+      refresh_token: refresh_token,
+    });
+
+    return {
+      user_id: user_id,
+      refresh_token: refresh_token,
+    };
   }
 }
 
